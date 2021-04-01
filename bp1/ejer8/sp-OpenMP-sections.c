@@ -63,29 +63,27 @@ int main(int argc, char **argv) {
 #endif
 
   // Inicializar vectores
-  if (N < 9)
-#pragma omp parallel
-    for (i = 0; i < N; i++) {
-#pragma omp sections
-      {
+  if (N < 9) {
+#pragma omp parallel sections
+    {
 #pragma omp section
+      for (i = 0; i < N; i++)
         v1[i] = N * 0.1 + i * 0.1;
 #pragma omp section
+      for (i = 0; i < N; i++)
         v2[i] = N * 0.1 - i * 0.1;
-      }
     }
-  else {
+
+  } else {
     srand(time(0));
-#pragma omp parallel
+#pragma omp parallel sections
     {
+#pragma omp section
+      for (i = 0; i < N; i++)
+        v1[i] = rand() / ((double)rand());
+#pragma omp section
       for (i = 0; i < N; i++) {
-#pragma omp sections
-        {
-#pragma omp section
-          v1[i] = rand() / ((double)rand());
-#pragma omp section
-          v2[i] = rand() / ((double)rand());
-        }
+        v2[i] = rand() / ((double)rand());
         // printf("%d:%f,%f/",i,v1[i],v2[i]);
       }
     }
@@ -96,11 +94,16 @@ int main(int argc, char **argv) {
   // Calcular suma de vectores
 #pragma omp parallel
   {
-    for (i = 0; i < N; i++)
 #pragma omp sections
     {
 #pragma omp section
-      v3[i] = v1[i] + v2[i];
+      for (i = 0; i < N; i++) {
+        v3[i] = v1[i] + v2[i];
+      }
+
+#pragma omp section
+      for (i = N / 2; i < N; i++)
+        v3[i] = v1[i] + v2[i];
     }
   }
   double time2 = omp_get_wtime();
