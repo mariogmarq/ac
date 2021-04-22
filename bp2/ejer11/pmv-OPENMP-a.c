@@ -19,6 +19,7 @@ int main(int nargs, char **vargs) {
   }
 
   int n = atoi(vargs[1]);
+  int j;
 #ifdef DYN
   int **matriz = malloc(n * sizeof(int *));
   for (int i = 0; i < n; i++)
@@ -28,27 +29,26 @@ int main(int nargs, char **vargs) {
 #endif
 
   // Inicializacion
+#pragma omp parallel for private(j)
   for (int i = 0; i < n; i++) {
     v1[i] = rand();
-    v2[i] = 0;
-#pragma omp parallel for private(i)
-    for (int j = 0; j < n; j++)
+    for (j = 0; j < n; j++)
       matriz[i][j] = rand();
   }
-
+  double t1 = omp_get_wtime();
   // Producto
-  int i;
-  int j = 0;
-  for (i = 0; i < n; i++) {
-    int suma = 0;
-#pragma omp parallel reduction(+ : suma)
+#pragma omp parallel for private(j)
+  for (int i = 0; i < n; i++) {
+    v2[i] = 0;
     for (j = 0; j < n; j++) {
-      suma += matriz[i][j] * v1[j];
+      v2[i] += matriz[i][j] * v1[j];
     }
-    v2[i] = suma;
   }
 
-  printf("%d - %d", v2[0], v2[n - 1]);
+  double t2 = omp_get_wtime();
+
+  printf("%d - %d\n", v2[0], v2[n - 1]);
+  printf("time: %f\n", t2 - t1);
 
 #ifdef DYN
   for (int i = 0; i < n; i++)
